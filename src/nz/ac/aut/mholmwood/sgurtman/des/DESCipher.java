@@ -26,6 +26,31 @@ public class DESCipher {
     public DESCipher(long userKey){
         key = Key.generateKey(userKey);
     }
+    
+    public static void main(String[] args) {
+        long value = 0;
+        byte[] data = { 10, 26, 10, 0, 0, 0, 13, 12 };
+        
+        for(byte b : data) {
+            value <<= 8;
+            value |= b;
+        }
+        
+        System.out.println(value);
+        byte[] key = {'1', '2', '4', '5', '6', '3', '4' };
+        
+        DESCipher cipher = new DESCipher(key);
+        
+        long encrypted = cipher.start(value, true);
+        System.out.println(encrypted);
+        long decrypted = cipher.start(encrypted, false);
+        System.out.println(decrypted);
+        for(int x = 0; x < 8; x++) {
+            System.out.println((byte)decrypted);
+            decrypted >>= 8;
+        }
+    }
+    
     /* Pad a 7 character key into 64 bit key
      * @param key String whose first 7 characters are the key
      * @return 64 bit long containing key properly padded
@@ -45,75 +70,57 @@ public class DESCipher {
     
     public long[] encrypt(byte [] plaintext, byte terminatingByte)
     {
+       int x = 0, y;
+       long data;
+       long[] encrypted = new long[(plaintext.length / 8 + 
+               ((plaintext.length % 8 == 0) ? 0 : 1))];
+       long temp;
+       while(x < plaintext.length) {
+           data = 0;
+           for(y = 0; y < 8; y++) {
+               if(x < plaintext.length) {
+                   temp = 0;
+                   data <<= 8;
+                   temp |= plaintext[x];
+                   temp &= 0xFF;
+                   data |= temp;
+                   x++;
+               }
+               else {
+                   break;
+               }
+           }
+           
+           for(; y < 8; y++) {
+               System.out.println(y);
+               data <<= 8;
+               x++;
+           }
+           
+           System.out.println("in: " + data);
+           encrypted[(x / 8) - 1] = start(data, true);
+       }
        
-        long [] encryptedArray;
-       
-        byte [] terminatedArray = new byte[plaintext.length + 1];
-
-        int longArraySize = terminatedArray.length / 8;
-        
-        if(terminatedArray.length % 8 > 0)
-        {
-            longArraySize++;
-        }
-       
-        encryptedArray = new long[longArraySize];
-        
-        System.arraycopy(plaintext, 0, terminatedArray, 0, plaintext.length);
-        
-        terminatedArray[plaintext.length] = terminatingByte;
-
-         
-        for(int i = 0; i < terminatedArray.length; i += 8)
-        {
-            long toUse = 0;
-            for(int a = 0; a < 8; a++)
-            {
-                toUse = toUse << 8;
-                if((i+a) >= terminatedArray.length )
-                {
-                    byte random = 0;
-                    toUse = toUse | random;
-                }
-                else
-                {
-                    toUse = toUse | terminatedArray[i+a];
-                }
-            }
-            encryptedArray[i/8] = start(toUse, true);
-            
-        }
-        
-        return encryptedArray;
-       
+       return encrypted;
     }
     
     public byte [] decrypt(long [] encrypted, byte terminatingByte)
     {
-        byte [] bytesDecrypted = new byte[encrypted.length * 8];
-        int size = 0;
-        
-        for(int i = 0; i < encrypted.length; i++)
-        {
-            
-            long decrypted = start(encrypted[i],  false);
-            for(int a = 0; a < 8; a++)
-            {
-                
-                byte nextByte = (byte)(decrypted >> ((7-a)* 8)); 
-                if(nextByte == terminatingByte)
-                {
-                    break;
-                }
-                else
-                {
-                    bytesDecrypted[size] = nextByte;
-                    size++;
-                }
-              
+        byte[] data = new byte[encrypted.length * 8];
+        int x = 0;
+        long decrypted = 0;
+        while(x < encrypted.length) {
+            decrypted = start(encrypted[x], false);
+            System.out.println("out: " + decrypted);
+            for(int y = 7; y >= 0; y--) {
+                data[y + (x * 8)] = (byte)decrypted;
+                decrypted >>= 8;
             }
+            
+            x++;
         }
-        return Arrays.copyOf(bytesDecrypted, size);
+        
+        return data;
     }
     
     /**
@@ -130,12 +137,12 @@ public class DESCipher {
         
         //Split the code
         long rightData = initPerm & 0xFFFFFFFFl;
-        long leftData = initPerm & 0x7FFFFFFF00000000l;
+        long leftData = initPerm & 0xFFFFFFFF00000000l;
         leftData >>= 32;
         
-        if(initPerm < 0) {
-            leftData |= 0x80000000l;
-        }
+//        if(initPerm < 0) {
+//            leftData |= 0x80000000l;
+//        }
        
         //Determite if we are starting from round 0 (encryption) or 
         //round 15 (decryption)
@@ -172,6 +179,8 @@ public class DESCipher {
         //swap and combine the function result and L16
         else{
             fData <<= 32;
+            fData &= 0xFFFFFFFF00000000l;
+            rightData &= 0x00000000FFFFFFFFl;
             fData |= rightData;
         }
             

@@ -11,7 +11,7 @@ import java.io.IOException;
  * @author 
  */
 public class TestSecret {
-    private static String name = "h:\\smiley.jpg";
+    private static String name = "/home/michael/player.png";
     
     public static void main(String args[]) throws IOException{
         byte[] key = new byte[7];
@@ -23,11 +23,11 @@ public class TestSecret {
         }
         
         try {
-            SecretFile file = SecretFile.generate(name, "H:\\nothing");
+            SecretFile file = SecretFile.generate(name, "/home/michael/playerenc.g");
            
             file.encrypt(key);
-            file.setSrcPath("H:\\nothing");
-            file.setDestPath("H:\\decrypted.jpg");
+            file.setSrcPath("/home/michael/playerenc.g");
+            file.setDestPath("/home/michael/playerdec.png");
             file.decrypt(key);
             
         } catch (IOException ex) {
