@@ -140,16 +140,12 @@ public class DESCipher {
         long leftData = initPerm & 0xFFFFFFFF00000000l;
         leftData >>= 32;
         
-//        if(initPerm < 0) {
-//            leftData |= 0x80000000l;
-//        }
-       
         //Determite if we are starting from round 0 (encryption) or 
         //round 15 (decryption)
-        int direction = (encryption) ? 0 : 15;
+        int startRound = (encryption) ? 0 : 15;
       
         //See ya in the next 16 rounds
-        long output = round(leftData, rightData, key, direction, encryption);
+        long output = round(leftData, rightData, key, startRound, encryption);
         
         return Permutation.FINAL_PERMUTATION.permutateLong(output);
     }

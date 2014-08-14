@@ -100,7 +100,7 @@ public class SecretFile {
         byte[] fileBytes = Files.readAllBytes(srcPath);
 
         long[] encrypted = cipher.encrypt(fileBytes, (byte)'\n');
-
+        
         ByteBuffer buf = ByteBuffer.allocate(encrypted.length * 8);
 
         for(int x = 0; x < encrypted.length; x++){   
